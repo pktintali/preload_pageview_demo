@@ -1,53 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:preload/controller.dart';
+import 'package:video_player/video_player.dart';
 
-class Player extends StatefulWidget {
-  final String s;
+class Player extends StatelessWidget {
   final int i;
-  const Player({
+  Player({
     Key? key,
-    required this.s,
     required this.i,
   }) : super(key: key);
 
-  @override
-  _PlayerState createState() => _PlayerState();
-}
-
-class _PlayerState extends State<Player> {
-  Future<String> getFuture() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return widget.s;
-  }
-
   final PCC c = Get.find();
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: getFuture(),
-      builder: (cx, s) {
-        if (s.hasData) {
-          return GetBuilder<PCC>(builder: (_) {
-            if (widget.i == c.api) {
-              //Set AutoPlay True Here
-              //If Index equals Auto Play Index
-              print('AutoPlaying ${c.api}');
-            } else {
-              //Set AutoPlay False
-              print('AutoPlay Stopped for ${widget.i}');
-            }
-            //Player Here
-            return Column(
-              children: [
-                Text(s.data.toString()),
-                Text(widget.s),
-              ],
-            );
-          });
+    return GetBuilder<PCC>(
+      initState: (x) async {
+        print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1');
+        print(i);
+        print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX2');
+        // if (c.api > 1 && i == c.api) {
+        //   await c.disposeController(c.api - 2);
+        // }
+        if (!c.initilizedIndexes.contains(i)) {
+          await c.initializePlayer(i);
         }
-        return const CircularProgressIndicator();
+        // if(c.videoPlayerControllers[i]==null){
+        //   await c.initializeIndexedController(i);
+        // }
+        if (c.api > 1) {
+          await c.videoPlayerControllers[c.api - 2].dispose();
+        }
+      },
+      builder: (_) {
+        if (c.videoPlayerControllers.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!c.videoPlayerControllers[c.api].value.isInitialized) {
+          return const Center(
+              child: CircularProgressIndicator(
+            color: Colors.green,
+          ));
+        }
+        if (i == c.api) {
+          //Set AutoPlay True Here
+          if (i < c.videoPlayerControllers.length) {
+            if (c.videoPlayerControllers[c.api].value.isInitialized) {
+              c.videoPlayerControllers[c.api].play();
+            }
+          }
+          //If Index equals Auto Play Index
+          print('AutoPlaying ${c.api}');
+        }
+        return Stack(
+          children: [
+            c.videoPlayerControllers.isNotEmpty &&
+                    c.videoPlayerControllers[c.api].value.isInitialized
+                ? GestureDetector(
+                    onTap: () {
+                      if (c.videoPlayerControllers[c.api].value.isPlaying) {
+                        print("paused");
+                        c.videoPlayerControllers[c.api].pause();
+                      } else {
+                        c.videoPlayerControllers[c.api].play();
+                        print("playing");
+                      }
+                    },
+                    child: VideoPlayer(c.videoPlayerControllers[c.api]),
+                  )
+                : const Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.lightBlueAccent,
+                    ),
+                  ),
+          ],
+        );
       },
     );
   }
