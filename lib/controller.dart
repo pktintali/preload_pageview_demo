@@ -3,29 +3,26 @@ import 'package:video_player/video_player.dart';
 
 class PCC extends GetxController {
   int _api = 0;
-  List<VideoPlayerController> videoPlayerControllers = [];
+  List<VideoPlayerController?> videoPlayerControllers = [];
   List<int> initilizedIndexes = [];
   bool autoplay = true;
   int get api => _api;
 
   void updateAPI(int i) {
+    if (videoPlayerControllers[_api] != null) {
+      videoPlayerControllers[_api]!.pause();
+    }
     _api = i;
     update();
   }
 
-  // Future<void> fakeFuture() async {
-  //   await Future.delayed(const Duration(seconds: 1));
-  // }
-
   Future initializePlayer(int i) async {
-    print('ZZZZZZZZZZZ 1');
     print('initializing $i');
-    print('ZZZZZZZZZZ 2');
     late VideoPlayerController singleVideoController;
     singleVideoController = VideoPlayerController.network(videoURLs[i]);
     videoPlayerControllers.add(singleVideoController);
     initilizedIndexes.add(i);
-    await videoPlayerControllers[i].initialize();
+    await videoPlayerControllers[i]!.initialize();
     update();
   }
 
@@ -33,15 +30,16 @@ class PCC extends GetxController {
     late VideoPlayerController singleVideoController;
     singleVideoController = VideoPlayerController.network(videoURLs[index]);
     videoPlayerControllers[index] = singleVideoController;
-    await videoPlayerControllers[index].initialize();
+    await videoPlayerControllers[index]!.initialize();
     update();
   }
 
-  // Future disposeController(int i) async {
-  //   await videoPlayerControllers[i]!.dispose();
-  //   videoPlayerControllers[i] = null;
-  //   update();
-  // }
+  Future disposeController(int i) async {
+    if (videoPlayerControllers[i] != null) {
+      await videoPlayerControllers[i]!.dispose();
+      videoPlayerControllers[i] = null;
+    }
+  }
 
   final List<String> videoURLs = [
     'http://www.exit109.com/~dnn/clips/RW20seconds_1.mp4',
